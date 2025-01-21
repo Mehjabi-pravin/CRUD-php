@@ -14,18 +14,24 @@ if (!$conn) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-  $var_Title = $_POST['Title'];
-  $var_Description = $_POST['Description'];
+    // Assign values only if 'Title' and 'Description' exist in $_POST
+    if (isset($_POST['Title']) && isset($_POST['Description'])) {
+        $var_Title = $_POST['Title'];
+        $var_Description = $_POST['Description'];
 
-  // SQL query for insertion
-  $sql = "INSERT INTO notes (Title, Description) VALUES ('$var_Title', '$var_Description')";
-  $result = mysqli_query($conn, $sql);
-  if ($result) {
-    $insert = true; // for alert
-  } else {
-    echo "Failed: " . mysqli_error($conn);
-  }
+        // SQL query for insertion
+        $sql = "INSERT INTO notes (Title, Description) VALUES ('$var_Title', '$var_Description')";
+        $result = mysqli_query($conn, $sql);
+        if ($result) {
+            $insert = true; // for alert
+        } else {
+            echo "Failed: " . mysqli_error($conn);
+        }
+    }
 }
+
+
+
 ?>
 
 <!Doctype html>
@@ -47,6 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     </script>
 </head>
+
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
@@ -84,8 +91,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
       <button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>
     </div>";
     }
+
+   
     ?>
 
+
+    <!-- for insertion -->
     <div class="container my-4">
         <h2>Add a Note</h2>
         <!-- Form -->
@@ -115,23 +126,50 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 </tr>
             </thead>
             <tbody>
-                <!-- edit modal -->
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editModal">
-                    Edit modal
-                </button>
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                <!-- edit modal -->
+                
                 <!-- Modal -->
                 <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel"
                     aria-hidden="true">
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h1 class="modal-title fs-5" id="editModalLabel">Modal title</h1>
+                                <h1 class="modal-title fs-5" id="editModalLabel">Edit this note</h1>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"
                                     aria-label="Close"></button>
                             </div>
                             <div class="modal-body">
-                                ...
+                                <!-- Form -->
+                                <form action="/CRUD/inotes.php" method="POST">
+                                    <input type ="hidden" name = "snoEdit" id = "snoEdit">
+                                    
+                                    <div class="mb-3">
+                                        <label for="title" class="form-label">Note Title</label>
+                                        <input type="text" class="form-control" id="TitleEdit" name="TitleEdit">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="desc" class="form-label">Note Description</label>
+                                        <textarea class="form-control" id="DescriptionEdit" name="DescriptionEdit"></textarea>
+                                    </div>
+                                    <button type="submit" name="vicky" class="btn btn-primary">Update Note</button>
+                                </form>
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -140,6 +178,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         </div>
                     </div>
                 </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
                 <?php
@@ -152,7 +209,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <th scope='row'>" . $row['sno'] . "</th>
                         <td>" . $row['Title'] . "</td>
                         <td>" . $row['Description'] . "</td>
-                        <td><button type='button' class='btn btn-primary' data-bs-toggle='modal' data-bs-target='#editModal'>
+                        <td><button type='button' class='btn btn-primary' id= ".$row['sno']."  data-bs-toggle='modal' data-bs-target='#editModal'>
                                 Edit</button>
                         </td>
                       </tr>";
@@ -183,12 +240,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </script>
 
     <script>
-        edits = document.getElementsByclassName ('Edit');
-        Array.from (edits) . forEach((element)=>{
-            element.addEventListener("click",(e)=>{
-                console.log("Edit",e.target);
-            })
-        })    
+    edits = document.getElementsByClassName('Edit'); // Fix: Correct the class name capitalization
+    Array.from(edits).forEach((element) => {
+        element.addEventListener("click", (e) => {
+            // Get the row data
+            tr = e.target.parentNode.parentNode;
+            Title = tr.getElementsByTagName("td")[1].innerText; // Title column
+            Description = tr.getElementsByTagName("td")[2].innerText; // Description column
+
+            // Populate modal fields
+            document.getElementById("TitleEdit").value = Title;
+            document.getElementById("DescriptionEdit").value = Description;
+            document.getElementById("snoEdit").value = e.target.id; // Set the ID (sno)
+
+            // Toggle modal
+            $('#editModal').modal('toggle');
+        });
+    });
     </script>
 </body>
 
