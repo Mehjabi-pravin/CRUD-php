@@ -1,61 +1,85 @@
-<?php     
-$insert = false;
-// Connect to the database
-$servername = "localhost";
-$username = "root";
-$password = "";
-$database = "notes";
+<?php
+// Database connectivity
+include 'database.php';
 
-$conn = mysqli_connect($servername, $username, $password, $database);
-
-// Die if connection was not successful
-if (!$conn) {
-    die("Connection failed: " . mysqli_connect_error());
-}
-
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Assign values only if 'Title' and 'Description' exist in $_POST
-    if (isset($_POST['Title']) && isset($_POST['Description'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST')
+  {
+    if (isset($_POST['submit']))
+     {
+         // Insert new notes
         $var_Title = $_POST['Title'];
         $var_Description = $_POST['Description'];
 
-        // SQL query for insertion
         $sql = "INSERT INTO notes (Title, Description) VALUES ('$var_Title', '$var_Description')";
-        $result = mysqli_query($conn, $sql);
-        if ($result) {
-            $insert = true; // for alert
+        $insertResult = mysqli_query($conn, $sql);
+
+        if ($insertResult) 
+        {
+            echo '<div class="alert alert-primary" role="alert">Data inserted successfully!</div>';
+        } 
+        else 
+        {
+            echo "Data insertion failed: " . mysqli_error($conn);
+        }
+    } 
+
+
+
+    elseif (isset($_POST['update'])) 
+    { 
+        // Update existing note
+        $var_sno = $_POST['sno'];
+        $var_title = $_POST['Title'];
+        $var_des = $_POST['Description'];
+
+        $sql = "UPDATE notes SET Title='$var_title', Description ='$var_des' WHERE sno='$var_sno'";
+        $updateResult = mysqli_query($conn, $sql);
+
+        if ($updateResult)
+         {
+            echo '<div class="alert alert-success" role="alert">Note updated successfully!</div>';
+         } 
+        else
+         {
+            echo "Update failed: " . mysqli_error($conn);
+         }
+    } 
+
+
+
+     // Delete note
+    elseif (isset($_POST['delete'])) 
+
+    { 
+        $sno = $_POST['sno'];
+
+        $sql = "DELETE FROM notes WHERE sno='$sno'";
+        $deleteResult = mysqli_query($conn, $sql);
+
+        if ($deleteResult) {
+            echo '<div class="alert alert-danger" role="alert">Note deleted successfully!</div>';
         } else {
-            echo "Failed: " . mysqli_error($conn);
+            echo "Delete failed: " . mysqli_error($conn);
         }
     }
 }
-
-
-
 ?>
 
-<!Doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-
-    <!-- DataTables CSS -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-
-    <title>iNotes - Notes Taking Made Easy</title>
-    <script>
-
-    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRUD Project</title>
+    <link rel="stylesheet" href="styles.css"> 
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
 </head>
-
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="#">iNotes</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
@@ -83,181 +107,135 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </div>
     </nav>
 
-    <?php
-    //alert for insertion 
-    if ($insert) {
-        echo "<div class='alert alert-success alert-dismissible fade show' role='alert'>
-      <strong>Success!</strong> Your note has been successfully inserted.
-      <button type='button' class='btn-close' data-bs-dismiss='alert' aria-label='Close'></button>
-    </div>";
-    }
+<div class="container my-4">
+    <h2>Add a New Note</h2>
+    <form action="inotes.php" method="post">
+        <div class="mb-3">
+          <label for="Title" class="form-label">Title</label>
+          <input type="text" class="form-control" id="Title" name="Title" required>
+        </div>
+        <div class="mb-3">
+          <label for="Description" class="form-label">Note Description</label>
+          <input type="text" class="form-control" name="Description" id="Description" required>
+        </div>
+        <button type="submit" name="submit" class="btn btn-primary">Submit</button>
+    </form>
+</div>
 
-   
-    ?>
+<div class="container mt-5">
+    <h2>Notes Table</h2>
+    <table class="table" id="notesTable">
+        <thead>
+            <tr>
+                <th scope="col">Sno</th>
+                <th scope="col">Title</th>
+                <th scope="col">Description</th>
+                <th scope="col">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php
+            $sql = "SELECT * FROM notes";
+            $selectResult = mysqli_query($conn, $sql);
+            $no=0;
 
-
-    <!-- for insertion -->
-    <div class="container my-4">
-        <h2>Add a Note</h2>
-        <!-- Form -->
-        <form action="/CRUD/inotes.php" method="POST">
-            <div class="mb-3">
-                <label for="title" class="form-label">Note Title</label>
-                <input type="text" class="form-control" id="Title" name="Title">
-            </div>
-            <div class="mb-3">
-                <label for="desc" class="form-label">Note Description</label>
-                <textarea class="form-control" id="Description" name="Description"></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary">Submit</button>
-        </form>
-    </div>
-
-    <!-- Table -->
-    <div class="container">
-        <table class="table table-striped table-hover" id="myTable">
-            <thead>
-                <tr>
-                    <th scope="col">S.No</th>
-                    <th scope="col">Title</th>
-                    <th scope="col">Description</th>
-                    <th scope="col">Actions</th>
-
-                </tr>
-            </thead>
-            <tbody>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                <!-- edit modal -->
-                
-                <!-- Modal -->
-                <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel"
-                    aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h1 class="modal-title fs-5" id="editModalLabel">Edit this note</h1>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                    aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <!-- Form -->
-                                <form action="/CRUD/inotes.php" method="POST">
-                                    <input type ="hidden" name = "snoEdit" id = "snoEdit">
-                                    
-                                    <div class="mb-3">
-                                        <label for="title" class="form-label">Note Title</label>
-                                        <input type="text" class="form-control" id="TitleEdit" name="TitleEdit">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="desc" class="form-label">Note Description</label>
-                                        <textarea class="form-control" id="DescriptionEdit" name="DescriptionEdit"></textarea>
-                                    </div>
-                                    <button type="submit" name="vicky" class="btn btn-primary">Update Note</button>
-                                </form>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                <button type="button" class="btn btn-primary">Save changes</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                <?php
-            $sql = "SELECT * FROM `notes`";
-            $result = mysqli_query($conn, $sql);
-
-            // Fetching and displaying notes
-            while ($row = mysqli_fetch_assoc($result)) {
-                echo "<tr>
-                        <th scope='row'>" . $row['sno'] . "</th>
-                        <td>" . $row['Title'] . "</td>
-                        <td>" . $row['Description'] . "</td>
-                        <td><button type='button' class='btn btn-primary' id= ".$row['sno']."  data-bs-toggle='modal' data-bs-target='#editModal'>
-                                Edit</button>
-                        </td>
-                      </tr>";
+            while ($row = mysqli_fetch_assoc($selectResult)) {
+                echo "<tr>";
+                $no+=1;
+                echo "<td>" . $no  . "</td>";
+                echo "<td>" . htmlspecialchars($row['Title']) . "</td>";
+                echo "<td>" . htmlspecialchars($row['Description']) . "</td>";
+                echo "<td>
+                        <button class='btn btn-sm btn-warning edit-btn' data-bs-toggle='modal' data-bs-target='#editModal' data-sno='" . $row['sno'] . "' data-title='" . htmlspecialchars($row['Title']) . "' data-des='" . htmlspecialchars($row['Description']) . "'>Edit</button>
+                        <button class='btn btn-sm btn-danger delete-btn' data-bs-toggle='modal' data-bs-target='#deleteModal' data-sno='" . $row['sno'] . "'>Delete</button>
+                      </td>";
+                echo "</tr>";
             }
-            
             ?>
-            </tbody>
-        </table>
+        </tbody>
+    </table>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="inotes.php" method="post">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editModalLabel">Edit Note</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body">
+          <input type="hidden" name="sno" id="edit-sno">
+
+          <div class="mb-3">
+            <label for="edit-title" class="form-label">Title</label>
+            <input type="text" class="form-control" id="edit-title" name="Title">
+          </div>
+
+          <div class="mb-3">
+            <label for="edit-des" class="form-label">Description</label>
+            <input type="text" class="form-control" id="edit-des" name="Description">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="submit" name="update" class="btn btn-primary">Save changes</button>
+        </div>
+
+
+      </form>
     </div>
+  </div>
+</div>
 
-    <!-- Optional JavaScript -->
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
-        integrity="sha256-HwB7FRA3GztlBg7OSxZBYWoX1jxsV3JN8W6gWT6VRQQ=" crossorigin="anonymous"></script>
 
-    <!-- Bootstrap Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
-        crossorigin="anonymous"></script>
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="inotes.php" method="post">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteModalLabel">Delete Note</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
 
-    <!-- DataTables JS -->
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 
-    <script>
-        $(document).ready(function () {
-            $('#myTable').DataTable();
-        });
-    </script>
+        <div class="modal-body">
+          Are you sure you want to delete this note?
 
-    <script>
-    edits = document.getElementsByClassName('Edit'); // Fix: Correct the class name capitalization
-    Array.from(edits).forEach((element) => {
-        element.addEventListener("click", (e) => {
-            // Get the row data
-            tr = e.target.parentNode.parentNode;
-            Title = tr.getElementsByTagName("td")[1].innerText; // Title column
-            Description = tr.getElementsByTagName("td")[2].innerText; // Description column
+          <input type="hidden" name="sno" id="delete-sno">
+        </div>
 
-            // Populate modal fields
-            document.getElementById("TitleEdit").value = Title;
-            document.getElementById("DescriptionEdit").value = Description;
-            document.getElementById("snoEdit").value = e.target.id; // Set the ID (sno)
+        <div class="modal-footer">
+          <button type="submit" name="delete" class="btn btn-danger">Delete</button>
+        </div>
 
-            // Toggle modal
-            $('#editModal').modal('toggle');
-        });
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    $('#notesTable').DataTable();
+
+    $('.edit-btn').click(function() {
+        $('#edit-sno').val($(this).data('sno'));
+        $('#edit-title').val($(this).data('Title'));
+        $('#edit-des').val($(this).data('Description'));
     });
-    </script>
-</body>
 
+    $('.delete-btn').click(function() {
+        $('#delete-sno').val($(this).data('sno'));
+    });
+});
+
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+
+</body>
 </html>
